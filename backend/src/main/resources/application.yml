@@ -1,0 +1,29 @@
+server:
+  port: 9180
+  servlet:
+    context-path: /api
+
+spring:
+  application:
+    name: supplier-management-backend
+  datasource:
+    url: jdbc:mysql://${DB_HOST:127.0.0.1}:${DB_PORT:3306}/${DB_NAME:supplier_mgmt}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: ${DB_USER:supplier_app}
+    password: ${DB_PASS:supplier123}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Shanghai
+
+mybatis-plus:
+  mapper-locations: classpath:/mapper/**/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+
+portal:
+  sso-base-url: ${PORTAL_SSO_BASE_URL:http://127.0.0.1:3000/api}
+  app-code: supplier
+
+app:
+  jwt-secret: supplier-system-dev-secret
+  token-expire-seconds: 28800

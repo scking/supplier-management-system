@@ -1,0 +1,42 @@
+version: "3.9"
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: supplier-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: supplier_mgmt
+    ports:
+      - "33306:3306"
+    volumes:
+      - supplier_mysql_data:/var/lib/mysql
+      - ./sql/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./sql/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
+
+  backend:
+    build:
+      context: ./backend
+    container_name: supplier-backend
+    depends_on:
+      - mysql
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/supplier_mgmt?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      PORTAL_SSO_BASE_URL: http://host.docker.internal:3000/api
+    ports:
+      - "9180:9180"
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: supplier-frontend
+    depends_on:
+      - backend
+    ports:
+      - "3180:80"
+
+volumes:
+  supplier_mysql_data:
+

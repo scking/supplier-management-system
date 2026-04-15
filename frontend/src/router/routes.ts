@@ -1,0 +1,105 @@
+export const routes = [
+  {
+    path: "/login",
+    name: "login",
+    component: () => import("@/views/login/LoginView.vue"),
+    meta: { title: "登录" },
+  },
+  {
+    path: "/",
+    component: () => import("@/layout/MainLayout.vue"),
+    redirect: "/dashboard",
+    children: [
+      {
+        path: "dashboard",
+        name: "dashboard",
+        component: () => import("@/views/dashboard/DashboardView.vue"),
+        meta: { title: "工作台", cacheKey: "dashboard" },
+      },
+      {
+        path: "supplier/list",
+        name: "supplier-list",
+        component: () => import("@/views/supplier/SupplierListView.vue"),
+        meta: { title: "供应商管理", cacheKey: "supplier-list" },
+      },
+      {
+        path: "supplier/qualification",
+        name: "supplier-qualification",
+        component: () => import("@/views/supplier/SupplierQualificationView.vue"),
+        meta: { title: "资质管理", cacheKey: "supplier-qualification" },
+      },
+      {
+        path: "product/list",
+        name: "product-list",
+        component: () => import("@/views/product/ProductListView.vue"),
+        meta: { title: "产品管理", cacheKey: "product-list" },
+      },
+      {
+        path: "product/params",
+        name: "product-params",
+        component: () => import("@/views/product/ProductParamView.vue"),
+        meta: { title: "产品参数", cacheKey: "product-params" },
+      },
+      {
+        path: "product/attachments",
+        name: "product-attachments",
+        component: () => import("@/views/product/ProductAttachmentView.vue"),
+        meta: { title: "产品附件", cacheKey: "product-attachments" },
+      },
+      {
+        path: "supplier-product/list",
+        name: "supplier-product-list",
+        component: () => import("@/views/supplier-product/SupplierProductListView.vue"),
+        meta: { title: "产品供应关系", cacheKey: "supplier-product-list" },
+      },
+      {
+        path: "purchase/list",
+        name: "purchase-list",
+        component: () => import("@/views/purchase/PurchaseListView.vue"),
+        meta: { title: "采购需求", cacheKey: "purchase-list" },
+      },
+      {
+        path: "inquiry/list",
+        name: "inquiry-list",
+        component: () => import("@/views/inquiry/InquiryListView.vue"),
+        meta: { title: "询价比价", cacheKey: "inquiry-list" },
+      },
+      {
+        path: "contract/list",
+        name: "contract-list",
+        component: () => import("@/views/contract/ContractListView.vue"),
+        meta: { title: "合同管理", cacheKey: "contract-list" },
+      },
+      {
+        path: "performance/list",
+        name: "performance-list",
+        component: () => import("@/views/performance/PerformanceListView.vue"),
+        meta: { title: "履约管理", cacheKey: "performance-list" },
+      },
+      {
+        path: "evaluation/list",
+        name: "evaluation-list",
+        component: () => import("@/views/evaluation/EvaluationListView.vue"),
+        meta: { title: "供应商评价", cacheKey: "evaluation-list" },
+      },
+      {
+        path: "risk/list",
+        name: "risk-list",
+        component: () => import("@/views/risk/RiskListView.vue"),
+        meta: { title: "风险预警", cacheKey: "risk-list" },
+      },
+      {
+        path: "stats/index",
+        name: "stats-index",
+        component: () => import("@/views/stats/StatsView.vue"),
+        meta: { title: "统计分析", cacheKey: "stats-index" },
+      },
+      {
+        path: "audit/operation-log",
+        name: "audit-operation-log",
+        component: () => import("@/views/audit/OperationLogView.vue"),
+        meta: { title: "操作日志", cacheKey: "audit-operation-log" },
+      },
+    ],
+  },
+];
