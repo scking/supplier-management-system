@@ -1,3 +1,5 @@
+SET NAMES utf8mb4;
+
 INSERT INTO sup_supplier (
   supplier_code, supplier_name, supplier_type, status, credit_code,
   legal_person, contact_person, contact_phone, city, cooperation_level, remark
