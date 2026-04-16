@@ -64,10 +64,14 @@ public class PerformanceService {
         entity.setSupplierId(request.getSupplierId());
         entity.setPerformanceType(request.getPerformanceType());
         entity.setNodeName(request.getNodeName());
-        entity.setPlannedDate(request.getPlannedDate());
-        entity.setActualDate(request.getActualDate());
+        entity.setPlannedDate(blankToNull(request.getPlannedDate()));
+        entity.setActualDate(blankToNull(request.getActualDate()));
         entity.setResponsibleUserId(request.getResponsibleUserId());
         entity.setDescription(request.getDescription());
         entity.setRemark(request.getRemark());
+    }
+
+    private String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value;
     }
 }

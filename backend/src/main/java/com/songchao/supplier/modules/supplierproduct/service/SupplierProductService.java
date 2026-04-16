@@ -83,7 +83,9 @@ public class SupplierProductService {
     }
 
     public void delete(Long id) {
-        mapper.deleteById(getById(id).getId());
+        SupplierProduct entity = getById(id);
+        priceHistoryService.deleteBySupplierProductId(entity.getId());
+        mapper.deleteById(entity.getId());
     }
 
     private SupplierProduct getById(Long id) {

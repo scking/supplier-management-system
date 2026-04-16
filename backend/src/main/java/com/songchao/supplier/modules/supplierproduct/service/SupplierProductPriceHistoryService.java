@@ -52,6 +52,15 @@ public class SupplierProductPriceHistoryService {
         mapper.deleteById(getById(id).getId());
     }
 
+    public void deleteBySupplierProductId(Long supplierProductId) {
+        if (supplierProductId == null) {
+            return;
+        }
+        LambdaQueryWrapper<SupplierProductPriceHistory> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(SupplierProductPriceHistory::getSupplierProductId, supplierProductId);
+        mapper.delete(wrapper);
+    }
+
     private SupplierProductPriceHistory getById(Long id) {
         SupplierProductPriceHistory entity = mapper.selectById(id);
         if (entity == null) {

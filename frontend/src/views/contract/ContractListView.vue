@@ -1,51 +1,68 @@
 <template>
-  <div class="contract-page">
-    <div class="contract-stats">
-      <el-card class="stat-card" shadow="hover">
-        <div class="stat-label">全部合同</div>
-        <div class="stat-value">{{ rows.length }}</div>
-        <div class="stat-sub">供应商系统统一合同台账</div>
-      </el-card>
-      <el-card class="stat-card danger" shadow="hover">
-        <div class="stat-label">已逾期</div>
-        <div class="stat-value">{{ overdueCount }}</div>
-        <div class="stat-sub">合同已过截止日期</div>
-      </el-card>
-      <el-card class="stat-card warn" shadow="hover">
-        <div class="stat-label">近7天到期</div>
-        <div class="stat-value">{{ upcomingCount }}</div>
-        <div class="stat-sub">建议优先跟进</div>
-      </el-card>
+  <div class="saas-list-page contract-page">
+    <div class="saas-page-header">
+      <div>
+        <h2 class="saas-page-title">合同管理</h2>
+        <p class="saas-page-subtitle">统一维护合同台账、金额、付款计划与到期提醒</p>
+      </div>
+      <div class="saas-row-actions">
+        <el-button type="primary" @click="openCreate">
+          <el-icon><Plus /></el-icon>
+          <span>新增合同</span>
+        </el-button>
+      </div>
     </div>
 
-    <el-row :gutter="16" class="content-grid">
-      <el-col :lg="16" :xs="24">
-        <el-card>
-          <template #header>
-            <div class="card-header-row">
-              <span>合同管理</span>
-              <el-button type="primary" @click="openCreate">新增合同</el-button>
-            </div>
-          </template>
+    <div class="saas-kpi-grid three-col">
+      <div class="saas-kpi">
+        <div class="saas-kpi-icon tone-brand"><el-icon :size="20"><Document /></el-icon></div>
+        <div class="saas-kpi-body">
+          <div class="saas-kpi-label">全部合同</div>
+          <div class="saas-kpi-value">{{ rows.length }}</div>
+          <div class="saas-kpi-sub">供应商系统统一合同台账</div>
+        </div>
+      </div>
+      <div class="saas-kpi">
+        <div class="saas-kpi-icon tone-danger"><el-icon :size="20"><Warning /></el-icon></div>
+        <div class="saas-kpi-body">
+          <div class="saas-kpi-label">已逾期</div>
+          <div class="saas-kpi-value">{{ overdueCount }}</div>
+          <div class="saas-kpi-sub">合同已过截止日期</div>
+        </div>
+      </div>
+      <div class="saas-kpi">
+        <div class="saas-kpi-icon tone-warning"><el-icon :size="20"><Clock /></el-icon></div>
+        <div class="saas-kpi-body">
+          <div class="saas-kpi-label">近7天到期</div>
+          <div class="saas-kpi-value">{{ upcomingCount }}</div>
+          <div class="saas-kpi-sub">建议优先跟进</div>
+        </div>
+      </div>
+    </div>
 
-          <div class="toolbar-row">
-            <el-input
-              v-model="query.keyword"
-              placeholder="搜索合同编号 / 标题 / 供应商 / 项目"
-              clearable
-              class="toolbar-input"
-              @keyup.enter="loadData"
-            />
-            <el-select v-model="query.contractStatus" placeholder="状态" clearable class="toolbar-select">
-              <el-option v-for="item in contractStatusOptions" :key="item.value" :label="item.label" :value="item.value" />
-            </el-select>
-            <el-select v-model="filterType" class="toolbar-select">
-              <el-option label="全部" value="all" />
-              <el-option label="已逾期" value="overdue" />
-              <el-option label="近7天" value="upcoming" />
-            </el-select>
-            <el-button type="primary" @click="loadData">查询</el-button>
-          </div>
+    <el-row :gutter="20" class="content-grid">
+      <el-col :lg="16" :xs="24">
+        <div class="saas-toolbar">
+          <el-input
+            v-model="query.keyword"
+            placeholder="搜索合同编号 / 标题 / 供应商 / 项目"
+            clearable
+            class="toolbar-input"
+            :prefix-icon="Search"
+            @keyup.enter="loadData"
+          />
+          <el-select v-model="query.contractStatus" placeholder="状态" clearable class="toolbar-select">
+            <el-option v-for="item in contractStatusOptions" :key="item.value" :label="item.label" :value="item.value" />
+          </el-select>
+          <el-select v-model="filterType" class="toolbar-select">
+            <el-option label="全部" value="all" />
+            <el-option label="已逾期" value="overdue" />
+            <el-option label="近7天" value="upcoming" />
+          </el-select>
+          <el-button type="primary" @click="loadData">查询</el-button>
+        </div>
+
+        <section class="saas-card is-flush">
 
           <el-table :data="filteredRows" stripe v-loading="loading" @row-click="handlePickContract">
             <el-table-column prop="contractNo" label="合同编号" width="160" />
@@ -71,23 +88,26 @@
             <el-table-column prop="paymentStatus" label="付款状态" width="120" />
             <el-table-column label="操作" width="180" fixed="right">
               <template #default="{ row }">
-                <el-button link type="primary" @click.stop="handlePickContract(row)">详情</el-button>
-                <el-button link type="primary" @click.stop="openEdit(row)">编辑</el-button>
-                <el-button link type="danger" @click.stop="handleDelete(row.id)">删除</el-button>
+                <div class="saas-row-actions">
+                  <el-button link type="primary" @click.stop="handlePickContract(row)">详情</el-button>
+                  <el-button link type="primary" @click.stop="openEdit(row)">编辑</el-button>
+                  <el-button link type="danger" @click.stop="handleDelete(row.id)">删除</el-button>
+                </div>
               </template>
             </el-table-column>
           </el-table>
-        </el-card>
+        </section>
       </el-col>
 
       <el-col :lg="8" :xs="24">
-        <el-card class="reminder-card">
-          <template #header>
-            <div class="card-header-row">
-              <span>到期提醒</span>
-              <el-button text type="primary" @click="loadReminders">刷新</el-button>
-            </div>
-          </template>
+        <section class="saas-card reminder-card">
+          <h3 class="saas-card-title">
+            <span>到期提醒</span>
+            <el-button text type="primary" @click="loadReminders">
+              <el-icon><Refresh /></el-icon>
+              <span>刷新</span>
+            </el-button>
+          </h3>
           <div v-if="reminders.length" class="reminder-list">
             <button
               v-for="item in reminders"
@@ -105,7 +125,7 @@
             </button>
           </div>
           <el-empty v-else description="暂无需要跟进的合同提醒" :image-size="72" />
-        </el-card>
+        </section>
       </el-col>
     </el-row>
   </div>
@@ -390,6 +410,7 @@
 import { computed, onMounted, reactive, ref } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import type { UploadFile } from "element-plus";
+import { Plus, Search, Refresh, Document, Warning, Clock } from "@element-plus/icons-vue";
 import { contractApi } from "@/api/contract";
 import { contractAttachmentApi } from "@/api/contractAttachment";
 import { supplierApi } from "@/api/supplier";

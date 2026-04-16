@@ -63,7 +63,9 @@ public class SupplierQualificationService {
     }
 
     public void delete(Long id) {
-        mapper.deleteById(getById(id).getId());
+        SupplierQualification entity = getById(id);
+        mapper.deleteById(entity.getId());
+        deleteExpiryRisks(entity.getId());
     }
 
     private SupplierQualification getById(Long id) {
@@ -88,11 +90,13 @@ public class SupplierQualificationService {
 
     private void syncExpiryRisk(SupplierQualification qualification) {
         if (qualification.getExpireDate() == null || qualification.getExpireDate().isBlank()) {
+            deleteExpiryRisks(qualification.getId());
             return;
         }
         LocalDate expireDate = LocalDate.parse(qualification.getExpireDate());
         LocalDate today = LocalDate.now();
         if (expireDate.isBefore(today) || expireDate.isAfter(today.plusDays(30))) {
+            deleteExpiryRisks(qualification.getId());
             return;
         }
 
@@ -124,6 +128,15 @@ public class SupplierQualificationService {
             riskWarningMapper.insert(riskWarning);
         } else {
             riskWarningMapper.updateById(riskWarning);
+        }
+    }
+
+    private void deleteExpiryRisks(Long qualificationId) {
+        List<RiskWarning> riskWarnings = riskWarningMapper.selectList(new LambdaQueryWrapper<RiskWarning>()
+                .eq(RiskWarning::getWarningType, "QUALIFICATION_EXPIRE")
+                .eq(RiskWarning::getBizId, qualificationId));
+        for (RiskWarning riskWarning : riskWarnings) {
+            riskWarningMapper.deleteById(riskWarning.getId());
         }
     }
 }

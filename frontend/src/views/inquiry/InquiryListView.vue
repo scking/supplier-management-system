@@ -1,14 +1,27 @@
 <template>
-  <el-card>
-    <template #header>
-      <div class="card-header-row">
-        <span>询价比价管理</span>
-        <el-button type="primary" @click="openCreate">新增询价单</el-button>
+  <div class="saas-list-page">
+    <div class="saas-page-header">
+      <div>
+        <h2 class="saas-page-title">询价比价管理</h2>
+        <p class="saas-page-subtitle">发起询价、汇总报价、评分比价并推荐中选供应商</p>
       </div>
-    </template>
+      <div class="saas-row-actions">
+        <el-button type="primary" @click="openCreate">
+          <el-icon><Plus /></el-icon>
+          <span>新增询价单</span>
+        </el-button>
+      </div>
+    </div>
 
-    <div class="toolbar-row">
-      <el-input v-model="query.keyword" placeholder="搜索询价编号 / 标题" clearable class="toolbar-input" @keyup.enter="loadData" />
+    <div class="saas-toolbar">
+      <el-input
+        v-model="query.keyword"
+        placeholder="搜索询价编号 / 标题"
+        clearable
+        class="toolbar-input"
+        :prefix-icon="Search"
+        @keyup.enter="loadData"
+      />
       <el-select v-model="query.status" placeholder="状态" clearable class="toolbar-select">
         <el-option label="草稿" value="DRAFT" />
         <el-option label="已比价" value="COMPARED" />
@@ -16,7 +29,8 @@
       <el-button type="primary" @click="loadData">查询</el-button>
     </div>
 
-    <el-table :data="rows" stripe v-loading="loading">
+    <section class="saas-card is-flush">
+      <el-table :data="rows" stripe v-loading="loading">
       <el-table-column prop="inquiryNo" label="询价编号" width="160" />
       <el-table-column prop="inquiryTitle" label="询价标题" min-width="220" />
       <el-table-column prop="projectId" label="项目ID" width="100" />
@@ -26,21 +40,25 @@
       <el-table-column prop="recommendedReason" label="推荐说明" min-width="260" />
       <el-table-column label="操作" width="220" fixed="right">
         <template #default="{ row }">
-          <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
-          <el-button v-if="row.status === 'DRAFT'" link type="primary" @click="compare(row.id)">执行比价</el-button>
-          <el-button link type="success" @click="recommend(row.id)">推荐中选</el-button>
-          <el-button link type="danger" @click="handleDelete(row.id)">删除</el-button>
+          <div class="saas-row-actions">
+            <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
+            <el-button v-if="row.status === 'DRAFT'" link type="primary" @click="compare(row.id)">执行比价</el-button>
+            <el-button link type="success" @click="recommend(row.id)">推荐中选</el-button>
+            <el-button link type="danger" @click="handleDelete(row.id)">删除</el-button>
+          </div>
         </template>
       </el-table-column>
-    </el-table>
+      </el-table>
+    </section>
 
-    <el-divider>报价明细</el-divider>
-    <div class="toolbar-row">
-      <el-input v-model="quoteQuery.inquiryId" placeholder="询价单ID" class="toolbar-select" clearable />
-      <el-button @click="loadQuotes">查询报价</el-button>
-      <el-button type="primary" @click="openQuoteCreate">录入报价</el-button>
-    </div>
-    <el-table :data="quotes" stripe>
+    <section class="saas-card is-flush">
+      <h3 class="saas-card-title"><span>报价明细</span></h3>
+      <div class="saas-toolbar">
+        <el-input v-model="quoteQuery.inquiryId" placeholder="询价单ID" class="toolbar-select" clearable />
+        <el-button @click="loadQuotes">查询报价</el-button>
+        <el-button type="primary" @click="openQuoteCreate">录入报价</el-button>
+      </div>
+      <el-table :data="quotes" stripe>
       <el-table-column prop="compareRank" label="排名" width="80" />
       <el-table-column prop="inquiryId" label="询价单ID" width="110" />
       <el-table-column prop="supplierId" label="供应商ID" width="110" />
@@ -56,19 +74,23 @@
       <el-table-column prop="quoteStatus" label="状态" width="120" />
       <el-table-column label="操作" width="160" fixed="right">
         <template #default="{ row }">
-          <el-button link type="primary" @click="openQuoteEdit(row)">编辑</el-button>
-          <el-button link type="danger" @click="handleQuoteDelete(row.id)">删除</el-button>
+          <div class="saas-row-actions">
+            <el-button link type="primary" @click="openQuoteEdit(row)">编辑</el-button>
+            <el-button link type="danger" @click="handleQuoteDelete(row.id)">删除</el-button>
+          </div>
         </template>
       </el-table-column>
-    </el-table>
+      </el-table>
+    </section>
 
-    <el-divider>报价行项目</el-divider>
-    <div class="toolbar-row">
-      <el-input v-model="quoteItemQuery.inquiryId" placeholder="询价单ID" class="toolbar-select" clearable />
-      <el-input v-model="quoteItemQuery.quoteId" placeholder="报价单ID" class="toolbar-select" clearable />
-      <el-button @click="loadQuoteItems">查询行项目</el-button>
-    </div>
-    <el-table :data="quoteItems" stripe>
+    <section class="saas-card is-flush">
+      <h3 class="saas-card-title"><span>报价行项目</span></h3>
+      <div class="saas-toolbar">
+        <el-input v-model="quoteItemQuery.inquiryId" placeholder="询价单ID" class="toolbar-select" clearable />
+        <el-input v-model="quoteItemQuery.quoteId" placeholder="报价单ID" class="toolbar-select" clearable />
+        <el-button @click="loadQuoteItems">查询行项目</el-button>
+      </div>
+      <el-table :data="quoteItems" stripe>
       <el-table-column prop="quoteId" label="报价单ID" width="100" />
       <el-table-column prop="productName" label="产品名称" min-width="160" />
       <el-table-column prop="specification" label="规格型号" min-width="160" />
@@ -79,8 +101,9 @@
       <el-table-column prop="lineAmount" label="金额" width="120" />
       <el-table-column prop="deliveryCycleDays" label="交期" width="90" />
       <el-table-column prop="warrantyMonths" label="质保" width="90" />
-    </el-table>
-  </el-card>
+      </el-table>
+    </section>
+  </div>
 
   <el-dialog v-model="dialogVisible" :title="dialogTitle" width="720px">
     <el-form :model="form" label-width="100px">
@@ -149,6 +172,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
+import { Plus, Search } from "@element-plus/icons-vue";
 import { inquiryApi } from "@/api/inquiry";
 import { quoteApi } from "@/api/quote";
 

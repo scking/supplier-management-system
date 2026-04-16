@@ -71,6 +71,9 @@ public class PurchaseReqService {
             if (entity.getDeptId() == null) {
                 entity.setDeptId(AuthContext.get().deptId());
             }
+            if (entity.getDeptName() == null || entity.getDeptName().isBlank()) {
+                entity.setDeptName(AuthContext.get().deptName());
+            }
         }
         mapper.insert(entity);
         return entity;

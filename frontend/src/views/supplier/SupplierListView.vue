@@ -1,21 +1,26 @@
 <template>
-  <el-card>
-    <template #header>
-      <div class="card-header-row">
-        <span>供应商台账</span>
-        <div class="toolbar-row">
-          <el-button @click="resetQuery">重置</el-button>
-          <el-button type="primary" @click="openCreate">新增供应商</el-button>
-        </div>
+  <div class="saas-list-page">
+    <div class="saas-page-header">
+      <div>
+        <h2 class="saas-page-title">供应商台账</h2>
+        <p class="saas-page-subtitle">统一维护合作供应商的基础档案、联系信息与资信状态</p>
       </div>
-    </template>
+      <div class="saas-row-actions">
+        <el-button @click="resetQuery">重置</el-button>
+        <el-button type="primary" @click="openCreate">
+          <el-icon><Plus /></el-icon>
+          <span>新增供应商</span>
+        </el-button>
+      </div>
+    </div>
 
-    <div class="toolbar-row supplier-toolbar">
+    <div class="saas-toolbar">
       <el-input
         v-model="query.keyword"
         placeholder="搜索供应商名称 / 编号 / 联系人"
         clearable
         class="toolbar-input"
+        :prefix-icon="Search"
         @keyup.enter="loadData"
       />
       <el-select v-model="query.status" placeholder="状态" clearable class="toolbar-select">
@@ -26,7 +31,8 @@
       <el-button type="primary" @click="loadData">查询</el-button>
     </div>
 
-    <el-table :data="rows" stripe v-loading="loading">
+    <section class="saas-card is-flush">
+      <el-table :data="rows" stripe v-loading="loading">
       <el-table-column prop="supplierCode" label="供应商编号" width="160" />
       <el-table-column prop="supplierName" label="供应商名称" min-width="220" />
       <el-table-column prop="supplierType" label="类型" width="120" />
@@ -41,7 +47,7 @@
       <el-table-column prop="cooperationLevel" label="合作等级" width="100" />
       <el-table-column label="操作" width="320" fixed="right">
         <template #default="{ row }">
-          <div class="row-actions">
+          <div class="saas-row-actions">
             <el-button link type="primary" @click="openDetail(row.id)">详情</el-button>
             <el-button link type="primary" @click="openEdit(row.id)">编辑</el-button>
             <el-button v-if="row.status === 'NORMAL'" link type="warning" @click="changeStatus(row.id, 'freeze')">冻结</el-button>
@@ -52,8 +58,9 @@
           </div>
         </template>
       </el-table-column>
-    </el-table>
-  </el-card>
+      </el-table>
+    </section>
+  </div>
 
   <el-drawer v-model="drawerVisible" :title="drawerTitle" size="720px" destroy-on-close>
     <el-form ref="formRef" :model="form" :rules="rules" label-width="110px">
@@ -131,6 +138,7 @@
 import { computed, onActivated, onMounted, reactive, ref } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import type { FormInstance, FormRules } from "element-plus";
+import { Plus, Search } from "@element-plus/icons-vue";
 import { supplierApi } from "@/api/supplier";
 
 type Mode = "create" | "edit" | "detail";

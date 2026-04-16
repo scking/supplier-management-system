@@ -1,14 +1,27 @@
 <template>
-  <el-card>
-    <template #header>
-      <div class="card-header-row">
-        <span>采购需求管理</span>
-        <el-button type="primary" @click="openCreate">新增采购需求</el-button>
+  <div class="saas-list-page">
+    <div class="saas-page-header">
+      <div>
+        <h2 class="saas-page-title">采购需求管理</h2>
+        <p class="saas-page-subtitle">项目部发起采购需求,明细拆分到产品级,审批后流转到询价比价</p>
       </div>
-    </template>
+      <div class="saas-row-actions">
+        <el-button type="primary" @click="openCreate">
+          <el-icon><Plus /></el-icon>
+          <span>新增采购需求</span>
+        </el-button>
+      </div>
+    </div>
 
-    <div class="toolbar-row">
-      <el-input v-model="query.keyword" placeholder="搜索需求编号 / 标题 / 项目" clearable class="toolbar-input" @keyup.enter="loadData" />
+    <div class="saas-toolbar">
+      <el-input
+        v-model="query.keyword"
+        placeholder="搜索需求编号 / 标题 / 项目"
+        clearable
+        class="toolbar-input"
+        :prefix-icon="Search"
+        @keyup.enter="loadData"
+      />
       <el-select v-model="query.reqStatus" placeholder="状态" clearable class="toolbar-select">
         <el-option label="草稿" value="DRAFT" />
         <el-option label="已提交" value="SUBMITTED" />
@@ -16,7 +29,8 @@
       <el-button type="primary" @click="loadData">查询</el-button>
     </div>
 
-    <el-table :data="rows" stripe v-loading="loading">
+    <section class="saas-card is-flush">
+      <el-table :data="rows" stripe v-loading="loading">
       <el-table-column prop="reqNo" label="需求编号" width="160" />
       <el-table-column prop="reqTitle" label="需求标题" min-width="220" />
       <el-table-column prop="projectName" label="项目名称" min-width="200" />
@@ -27,22 +41,26 @@
       <el-table-column prop="reqStatus" label="状态" width="120" />
       <el-table-column label="操作" width="220" fixed="right">
         <template #default="{ row }">
-          <el-button link type="primary" @click="loadItems(row.id)">查看明细</el-button>
-          <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
-          <el-button v-if="row.reqStatus === 'DRAFT'" link type="primary" @click="submitReq(row.id)">提交</el-button>
-          <el-button link type="danger" @click="handleDelete(row.id)">删除</el-button>
+          <div class="saas-row-actions">
+            <el-button link type="primary" @click="loadItems(row.id)">查看明细</el-button>
+            <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
+            <el-button v-if="row.reqStatus === 'DRAFT'" link type="primary" @click="submitReq(row.id)">提交</el-button>
+            <el-button link type="danger" @click="handleDelete(row.id)">删除</el-button>
+          </div>
         </template>
       </el-table-column>
-    </el-table>
+      </el-table>
+    </section>
 
-    <el-divider>采购明细</el-divider>
-    <div class="toolbar-row">
-      <el-input v-model="itemQuery.reqId" placeholder="采购需求ID" clearable class="toolbar-select" />
-      <el-button @click="loadItems()">查询明细</el-button>
-      <el-button type="primary" @click="openItemCreate">新增明细</el-button>
-    </div>
+    <section class="saas-card is-flush">
+      <h3 class="saas-card-title"><span>采购明细</span></h3>
+      <div class="saas-toolbar">
+        <el-input v-model="itemQuery.reqId" placeholder="采购需求ID" clearable class="toolbar-select" />
+        <el-button @click="loadItems()">查询明细</el-button>
+        <el-button type="primary" @click="openItemCreate">新增明细</el-button>
+      </div>
 
-    <el-table :data="items" stripe>
+      <el-table :data="items" stripe>
       <el-table-column prop="reqId" label="需求ID" width="100" />
       <el-table-column prop="productName" label="产品名称" min-width="180" />
       <el-table-column prop="specification" label="规格型号" min-width="180" />
@@ -53,12 +71,15 @@
       <el-table-column prop="technicalRequirements" label="技术要求" min-width="220" />
       <el-table-column label="操作" width="160" fixed="right">
         <template #default="{ row }">
-          <el-button link type="primary" @click="openItemEdit(row)">编辑</el-button>
-          <el-button link type="danger" @click="handleItemDelete(row.id)">删除</el-button>
+          <div class="saas-row-actions">
+            <el-button link type="primary" @click="openItemEdit(row)">编辑</el-button>
+            <el-button link type="danger" @click="handleItemDelete(row.id)">删除</el-button>
+          </div>
         </template>
       </el-table-column>
-    </el-table>
-  </el-card>
+      </el-table>
+    </section>
+  </div>
 
   <el-dialog v-model="dialogVisible" :title="dialogTitle" width="720px">
     <el-form :model="form" label-width="100px">
@@ -111,7 +132,9 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
+import { Plus, Search } from "@element-plus/icons-vue";
 import { purchaseApi } from "@/api/purchase";
+import { useAuthStore } from "@/store/auth";
 
 const loading = ref(false);
 const dialogVisible = ref(false);
@@ -137,6 +160,7 @@ const form = reactive({
 });
 const dialogTitle = computed(() => (currentId.value ? "编辑采购需求" : "新增采购需求"));
 const itemDialogTitle = computed(() => (currentItemId.value ? "编辑采购需求明细" : "新增采购需求明细"));
+const authStore = useAuthStore();
 const itemForm = reactive({
   reqId: "",
   productId: "",
@@ -167,10 +191,10 @@ function openCreate() {
     projectId: "",
     projectName: "",
     reqTitle: "",
-    applicantId: "",
-    applicantName: "",
-    deptId: "",
-    deptName: "",
+    applicantId: authStore.userId ? String(authStore.userId) : "",
+    applicantName: authStore.realName || "",
+    deptId: authStore.deptId ? String(authStore.deptId) : "",
+    deptName: authStore.deptName || "",
     requiredDate: "",
     totalAmount: "",
     remark: "",
@@ -234,8 +258,10 @@ async function submitForm() {
   const payload = {
     ...form,
     projectId: Number(form.projectId || 0) || null,
-    applicantId: Number(form.applicantId || 0) || null,
-    deptId: Number(form.deptId || 0) || null,
+    applicantId: Number(form.applicantId || authStore.userId || 0) || null,
+    applicantName: form.applicantName || authStore.realName || "",
+    deptId: Number(form.deptId || authStore.deptId || 0) || null,
+    deptName: form.deptName || authStore.deptName || "",
     totalAmount: Number(form.totalAmount || 0),
   };
   if (currentId.value) {

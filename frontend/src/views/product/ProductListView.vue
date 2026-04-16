@@ -1,18 +1,32 @@
 <template>
-  <el-card>
-    <template #header>
-      <div class="card-header-row">
-        <span>产品管理</span>
-        <el-button type="primary" @click="openCreate">新增产品</el-button>
+  <div class="saas-list-page">
+    <div class="saas-page-header">
+      <div>
+        <h2 class="saas-page-title">产品管理</h2>
+        <p class="saas-page-subtitle">维护产品档案、规格型号、单位与启用状态</p>
       </div>
-    </template>
+      <div class="saas-row-actions">
+        <el-button type="primary" @click="openCreate">
+          <el-icon><Plus /></el-icon>
+          <span>新增产品</span>
+        </el-button>
+      </div>
+    </div>
 
-    <div class="toolbar-row">
-      <el-input v-model="query.keyword" placeholder="搜索产品名称 / 编号 / 品牌 / 型号" clearable class="toolbar-input" @keyup.enter="loadData" />
+    <div class="saas-toolbar">
+      <el-input
+        v-model="query.keyword"
+        placeholder="搜索产品名称 / 编号 / 品牌 / 型号"
+        clearable
+        class="toolbar-input"
+        :prefix-icon="Search"
+        @keyup.enter="loadData"
+      />
       <el-button type="primary" @click="loadData">查询</el-button>
     </div>
 
-    <el-table :data="rows" stripe v-loading="loading">
+    <section class="saas-card is-flush">
+      <el-table :data="rows" stripe v-loading="loading">
       <el-table-column prop="productCode" label="产品编号" width="160" />
       <el-table-column prop="productName" label="产品名称" min-width="220" />
       <el-table-column prop="productCategory" label="分类" width="140" />
@@ -22,12 +36,15 @@
       <el-table-column prop="status" label="状态" width="120" />
       <el-table-column label="操作" width="160" fixed="right">
         <template #default="{ row }">
-          <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
-          <el-button link type="danger" @click="handleDelete(row.id)">删除</el-button>
+          <div class="saas-row-actions">
+            <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
+            <el-button link type="danger" @click="handleDelete(row.id)">删除</el-button>
+          </div>
         </template>
       </el-table-column>
-    </el-table>
-  </el-card>
+      </el-table>
+    </section>
+  </div>
 
   <el-dialog v-model="dialogVisible" :title="dialogTitle" width="680px">
     <el-form :model="form" label-width="100px">
@@ -54,6 +71,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
+import { Plus, Search } from "@element-plus/icons-vue";
 import { productApi } from "@/api/product";
 
 const loading = ref(false);
