@@ -86,16 +86,16 @@
             <el-option label="C" value="C" />
           </el-select>
         </el-form-item>
-        <el-form-item label="统一信用代码">
+        <el-form-item label="统一信用代码" prop="creditCode">
           <el-input v-model="form.creditCode" :disabled="mode === 'detail'" />
         </el-form-item>
         <el-form-item label="法人代表">
           <el-input v-model="form.legalPerson" :disabled="mode === 'detail'" />
         </el-form-item>
-        <el-form-item label="联系人">
+        <el-form-item label="联系人" prop="contactPerson">
           <el-input v-model="form.contactPerson" :disabled="mode === 'detail'" />
         </el-form-item>
-        <el-form-item label="联系电话">
+        <el-form-item label="联系电话" prop="contactPhone">
           <el-input v-model="form.contactPhone" :disabled="mode === 'detail'" />
         </el-form-item>
         <el-form-item label="邮箱">
@@ -181,6 +181,9 @@ const rules: FormRules = {
   supplierCode: [{ required: true, message: "请输入供应商编号", trigger: "blur" }],
   supplierName: [{ required: true, message: "请输入供应商名称", trigger: "blur" }],
   supplierType: [{ required: true, message: "请选择供应商类型", trigger: "change" }],
+  creditCode: [{ required: true, message: "请输入统一信用代码", trigger: "blur" }],
+  contactPerson: [{ required: true, message: "请输入联系人", trigger: "blur" }],
+  contactPhone: [{ required: true, message: "请输入联系电话", trigger: "blur" }],
 };
 
 const drawerTitle = computed(() => {
@@ -265,6 +268,8 @@ async function submitForm() {
     }
     drawerVisible.value = false;
     await loadData();
+  } catch (error: any) {
+    ElMessage.error(error?.response?.data?.message || error?.message || "保存失败");
   } finally {
     submitting.value = false;
   }

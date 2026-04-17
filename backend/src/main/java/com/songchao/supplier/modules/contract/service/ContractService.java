@@ -79,9 +79,9 @@ public class ContractService {
         entity.setContractTitle(request.getContractTitle());
         entity.setContractAmount(request.getContractAmount());
         entity.setTaxRate(request.getTaxRate());
-        entity.setSignDate(request.getSignDate());
-        entity.setEffectiveDate(request.getEffectiveDate());
-        entity.setExpireDate(request.getExpireDate());
+        entity.setSignDate(normalizeDate(request.getSignDate()));
+        entity.setEffectiveDate(normalizeDate(request.getEffectiveDate()));
+        entity.setExpireDate(normalizeDate(request.getExpireDate()));
         entity.setContractStatus(request.getContractStatus() == null || request.getContractStatus().isBlank() ? "DRAFT" : request.getContractStatus());
         entity.setPaymentStatus(request.getPaymentStatus());
         if (AuthContext.get() != null) {
@@ -109,9 +109,9 @@ public class ContractService {
         entity.setContractTitle(request.getContractTitle());
         entity.setContractAmount(request.getContractAmount());
         entity.setTaxRate(request.getTaxRate());
-        entity.setSignDate(request.getSignDate());
-        entity.setEffectiveDate(request.getEffectiveDate());
-        entity.setExpireDate(request.getExpireDate());
+        entity.setSignDate(normalizeDate(request.getSignDate()));
+        entity.setEffectiveDate(normalizeDate(request.getEffectiveDate()));
+        entity.setExpireDate(normalizeDate(request.getExpireDate()));
         entity.setContractStatus(request.getContractStatus() == null || request.getContractStatus().isBlank() ? "DRAFT" : request.getContractStatus());
         entity.setPaymentStatus(request.getPaymentStatus());
         entity.setRemark(request.getRemark());
@@ -194,5 +194,13 @@ public class ContractService {
             throw new BizException("合同不存在", 404);
         }
         return entity;
+    }
+
+    private String normalizeDate(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 }

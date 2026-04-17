@@ -2,6 +2,7 @@ package com.songchao.supplier.modules.contractattachment.controller;
 
 import com.songchao.supplier.audit.operationlog.annotation.OperationLogRecord;
 import com.songchao.supplier.common.api.ApiResponse;
+import com.songchao.supplier.common.exception.BizException;
 import com.songchao.supplier.modules.contractattachment.dto.ContractAttachmentSaveRequest;
 import com.songchao.supplier.modules.contractattachment.entity.ContractAttachment;
 import com.songchao.supplier.modules.contractattachment.service.ContractAttachmentService;
@@ -77,6 +78,9 @@ public class ContractAttachmentController {
     ) {
         ContractAttachment attachment = service.getById(id);
         Path filePath = Path.of(attachment.getFilePath());
+        if (!filePath.toFile().exists()) {
+            throw new BizException("附件文件不存在", 404);
+        }
         Resource resource = new FileSystemResource(filePath);
         MediaType mediaType = MediaTypeFactory.getMediaType(attachment.getFileName()).orElse(MediaType.APPLICATION_OCTET_STREAM);
         String disposition = inline ? "inline" : "attachment";

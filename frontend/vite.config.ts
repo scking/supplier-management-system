@@ -13,5 +13,12 @@ export default defineConfig({
   server: {
     host: "127.0.0.1",
     port: 3180,
+    proxy: {
+      "/pm-api": {
+        target: "http://127.0.0.1:9280",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/pm-api/, "/api"),
+      },
+    },
   },
 });

@@ -94,20 +94,28 @@ function openEdit(row: any) {
 }
 
 async function submitForm() {
+  if (!form.productId || !form.paramName) {
+    ElMessage.warning("请先填写产品ID和参数名称");
+    return;
+  }
   const payload = {
     ...form,
     productId: Number(form.productId),
     sortNo: Number(form.sortNo || 0),
   };
-  if (currentId.value) {
-    await productApi.paramUpdate(currentId.value, payload);
-    ElMessage.success("产品参数已更新");
-  } else {
-    await productApi.paramCreate(payload);
-    ElMessage.success("产品参数已新增");
+  try {
+    if (currentId.value) {
+      await productApi.paramUpdate(currentId.value, payload);
+      ElMessage.success("产品参数已更新");
+    } else {
+      await productApi.paramCreate(payload);
+      ElMessage.success("产品参数已新增");
+    }
+    dialogVisible.value = false;
+    await loadData();
+  } catch (error: any) {
+    ElMessage.error(error?.response?.data?.message || error?.message || "保存失败");
   }
-  dialogVisible.value = false;
-  await loadData();
 }
 
 async function handleDelete(id: number) {

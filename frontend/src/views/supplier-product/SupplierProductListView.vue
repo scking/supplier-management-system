@@ -238,6 +238,10 @@ function openPriceHistoryEdit(row: any) {
 }
 
 async function submitForm() {
+  if (!form.supplierId || !form.productId) {
+    ElMessage.warning("请先填写供应商ID和产品ID");
+    return;
+  }
   const payload = {
     supplierId: Number(form.supplierId),
     productId: Number(form.productId),
@@ -251,19 +255,27 @@ async function submitForm() {
     taxRate: Number(form.taxRate || 0),
     priceRemark: form.priceRemark,
   };
-  if (currentId.value) {
-    await supplierProductApi.update(currentId.value, payload);
-    ElMessage.success("供应关系已更新");
-  } else {
-    await supplierProductApi.create(payload);
-    ElMessage.success("供应关系已创建");
+  try {
+    if (currentId.value) {
+      await supplierProductApi.update(currentId.value, payload);
+      ElMessage.success("供应关系已更新");
+    } else {
+      await supplierProductApi.create(payload);
+      ElMessage.success("供应关系已创建");
+    }
+    dialogVisible.value = false;
+    await loadData();
+    await loadPriceHistory();
+  } catch (error: any) {
+    ElMessage.error(error?.response?.data?.message || error?.message || "保存失败");
   }
-  dialogVisible.value = false;
-  await loadData();
-  await loadPriceHistory();
 }
 
 async function submitPriceHistory() {
+  if (!priceHistoryForm.supplierProductId) {
+    ElMessage.warning("请先填写供应关系ID");
+    return;
+  }
   const payload = {
     supplierProductId: Number(priceHistoryForm.supplierProductId),
     quotePrice: Number(priceHistoryForm.quotePrice || 0),
@@ -276,16 +288,20 @@ async function submitPriceHistory() {
     sourceId: Number(priceHistoryForm.sourceId || 0) || null,
     remark: priceHistoryForm.remark,
   };
-  if (currentPriceHistoryId.value) {
-    await supplierProductApi.priceHistoryUpdate(currentPriceHistoryId.value, payload);
-    ElMessage.success("历史价格已更新");
-  } else {
-    await supplierProductApi.priceHistoryCreate(payload);
-    ElMessage.success("历史价格已新增");
+  try {
+    if (currentPriceHistoryId.value) {
+      await supplierProductApi.priceHistoryUpdate(currentPriceHistoryId.value, payload);
+      ElMessage.success("历史价格已更新");
+    } else {
+      await supplierProductApi.priceHistoryCreate(payload);
+      ElMessage.success("历史价格已新增");
+    }
+    priceHistoryDialogVisible.value = false;
+    await loadData();
+    await loadPriceHistory();
+  } catch (error: any) {
+    ElMessage.error(error?.response?.data?.message || error?.message || "保存失败");
   }
-  priceHistoryDialogVisible.value = false;
-  await loadData();
-  await loadPriceHistory();
 }
 
 async function handleDelete(id: number) {

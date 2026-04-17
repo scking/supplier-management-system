@@ -335,20 +335,28 @@ function formatLineAmount(item: Record<string, string>) {
 }
 
 async function submitForm() {
+  if (!form.inquiryNo || !form.inquiryTitle) {
+    ElMessage.warning("请先填写询价单编号和询价标题");
+    return;
+  }
   const payload = {
     ...form,
     projectId: Number(form.projectId || 0) || null,
     reqId: Number(form.reqId || 0) || null,
   };
-  if (currentId.value) {
-    await inquiryApi.update(currentId.value, payload);
-    ElMessage.success("询价单已更新");
-  } else {
-    await inquiryApi.create(payload);
-    ElMessage.success("询价单已创建");
+  try {
+    if (currentId.value) {
+      await inquiryApi.update(currentId.value, payload);
+      ElMessage.success("询价单已更新");
+    } else {
+      await inquiryApi.create(payload);
+      ElMessage.success("询价单已创建");
+    }
+    dialogVisible.value = false;
+    await loadData();
+  } catch (error: any) {
+    ElMessage.error(error?.response?.data?.message || error?.message || "保存失败");
   }
-  dialogVisible.value = false;
-  await loadData();
 }
 
 async function compare(id: number) {

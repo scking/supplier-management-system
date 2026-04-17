@@ -13,6 +13,13 @@ export const contractAttachmentApi = {
       headers: { "Content-Type": "multipart/form-data" },
     });
   },
-  previewUrl: (id: number) => `http://127.0.0.1:9180/api/contract-attachments/${id}/download?inline=true`,
-  downloadUrl: (id: number) => `http://127.0.0.1:9180/api/contract-attachments/${id}/download`,
+  preview: (id: number) =>
+    request.get<any, Blob>(`/contract-attachments/${id}/download`, {
+      params: { inline: true },
+      responseType: "blob",
+    }),
+  download: (id: number) =>
+    request.get<any, Blob>(`/contract-attachments/${id}/download`, {
+      responseType: "blob",
+    }),
 };

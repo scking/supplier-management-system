@@ -118,19 +118,27 @@ function openEdit(row: any) {
 }
 
 async function submitForm() {
+  if (!form.supplierId || !form.qualificationType || !form.qualificationName) {
+    ElMessage.warning("请先填写供应商ID、资质类型和资质名称");
+    return;
+  }
   const payload = {
     ...form,
     supplierId: Number(form.supplierId),
   };
-  if (currentId.value) {
-    await supplierApi.qualificationUpdate(currentId.value, payload);
-    ElMessage.success("资质已更新");
-  } else {
-    await supplierApi.qualificationCreate(payload);
-    ElMessage.success("资质已新增");
+  try {
+    if (currentId.value) {
+      await supplierApi.qualificationUpdate(currentId.value, payload);
+      ElMessage.success("资质已更新");
+    } else {
+      await supplierApi.qualificationCreate(payload);
+      ElMessage.success("资质已新增");
+    }
+    dialogVisible.value = false;
+    await loadData();
+  } catch (error: any) {
+    ElMessage.error(error?.response?.data?.message || error?.message || "保存失败");
   }
-  dialogVisible.value = false;
-  await loadData();
 }
 
 async function handleDelete(id: number) {

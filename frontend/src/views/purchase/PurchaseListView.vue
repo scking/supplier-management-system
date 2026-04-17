@@ -255,6 +255,10 @@ function openItemEdit(row: any) {
 }
 
 async function submitForm() {
+  if (!form.reqNo || !form.reqTitle) {
+    ElMessage.warning("请先填写需求编号和需求标题");
+    return;
+  }
   const payload = {
     ...form,
     projectId: Number(form.projectId || 0) || null,
@@ -264,15 +268,19 @@ async function submitForm() {
     deptName: form.deptName || authStore.deptName || "",
     totalAmount: Number(form.totalAmount || 0),
   };
-  if (currentId.value) {
-    await purchaseApi.update(currentId.value, payload);
-    ElMessage.success("采购需求已更新");
-  } else {
-    await purchaseApi.create(payload);
-    ElMessage.success("采购需求已创建");
+  try {
+    if (currentId.value) {
+      await purchaseApi.update(currentId.value, payload);
+      ElMessage.success("采购需求已更新");
+    } else {
+      await purchaseApi.create(payload);
+      ElMessage.success("采购需求已创建");
+    }
+    dialogVisible.value = false;
+    await loadData();
+  } catch (error: any) {
+    ElMessage.error(error?.response?.data?.message || error?.message || "保存失败");
   }
-  dialogVisible.value = false;
-  await loadData();
 }
 
 async function submitReq(id: number) {
@@ -292,6 +300,10 @@ async function loadItems(reqId?: number) {
 }
 
 async function submitItem() {
+  if (!itemForm.reqId || !itemForm.productName) {
+    ElMessage.warning("请先填写需求ID和产品名称");
+    return;
+  }
   const payload = {
     reqId: Number(itemForm.reqId),
     productId: Number(itemForm.productId || 0) || null,
@@ -304,15 +316,19 @@ async function submitItem() {
     technicalRequirements: itemForm.technicalRequirements,
     remark: itemForm.remark,
   };
-  if (currentItemId.value) {
-    await purchaseApi.itemUpdate(currentItemId.value, payload);
-    ElMessage.success("采购需求明细已更新");
-  } else {
-    await purchaseApi.itemCreate(payload);
-    ElMessage.success("采购需求明细已创建");
+  try {
+    if (currentItemId.value) {
+      await purchaseApi.itemUpdate(currentItemId.value, payload);
+      ElMessage.success("采购需求明细已更新");
+    } else {
+      await purchaseApi.itemCreate(payload);
+      ElMessage.success("采购需求明细已创建");
+    }
+    itemDialogVisible.value = false;
+    await loadItems();
+  } catch (error: any) {
+    ElMessage.error(error?.response?.data?.message || error?.message || "保存失败");
   }
-  itemDialogVisible.value = false;
-  await loadItems();
 }
 
 async function handleDelete(id: number) {

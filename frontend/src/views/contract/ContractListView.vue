@@ -220,8 +220,8 @@
           <el-table-column prop="uploadedAt" label="上传时间" width="190" />
           <el-table-column label="操作" width="140">
             <template #default="{ row }">
-              <el-button link type="primary" @click="previewAttachment(row.id)">查看</el-button>
-              <el-button link type="success" @click="downloadAttachment(row.id)">下载</el-button>
+              <el-button link type="primary" @click="previewAttachment(row)">查看</el-button>
+              <el-button link type="success" @click="downloadAttachment(row)">下载</el-button>
               <el-button link type="danger" @click="deleteAttachment(row.id)">删除</el-button>
             </template>
           </el-table-column>
@@ -286,11 +286,26 @@
             <el-input v-model="form.supplierName" placeholder="可手动填写相对方名称" />
           </el-form-item>
           <el-form-item label="项目名称">
-            <el-input v-model="form.projectName" placeholder="请输入项目名称" />
+            <el-select
+              v-if="projectOptions.length"
+              v-model="form.projectId"
+              filterable
+              clearable
+              placeholder="请选择项目（来自项目管理系统）"
+              style="width: 100%"
+              @change="handleProjectChange"
+            >
+              <el-option
+                v-for="item in projectOptions"
+                :key="item.id"
+                :label="`${item.projectName}（${item.projectCode}）`"
+                :value="String(item.id)"
+              />
+            </el-select>
+            <el-input v-else v-model="form.projectName" placeholder="请输入项目名称" />
           </el-form-item>
-
-          <el-form-item label="项目ID">
-            <el-input v-model="form.projectId" placeholder="请输入项目ID" />
+          <el-form-item label="项目名称（只读）" v-if="projectOptions.length && form.projectId">
+            <el-input :model-value="form.projectName" readonly />
           </el-form-item>
           <el-form-item label="询价单ID">
             <el-input v-model="form.inquiryId" placeholder="可选" />
@@ -361,15 +376,32 @@
           <el-button type="primary" plain @click="addPaymentPlan">新增节点</el-button>
         </div>
         <div v-if="paymentPlans.length" class="plan-list">
+          <div class="plan-header-row">
+            <span>节点名称</span><span>类型</span><span>付款比例（%）</span><span>计算金额（含税）</span><span>计划日期</span><span></span>
+          </div>
           <div v-for="plan in paymentPlans" :key="plan.id" class="plan-row">
-            <el-input v-model="plan.phase" placeholder="节点名称" />
+            <el-input v-model="plan.phase" placeholder="节点名称，如：首付款" />
             <el-select v-model="plan.type">
               <el-option label="应收" value="应收" />
               <el-option label="应付" value="应付" />
             </el-select>
-            <el-input v-model="plan.amount" placeholder="金额" />
-            <el-date-picker v-model="plan.planDate" type="date" value-format="YYYY-MM-DD" />
+            <el-input-number
+              v-model="plan.ratio"
+              :min="0"
+              :max="100"
+              :precision="2"
+              :step="10"
+              placeholder="比例"
+              style="width: 130px"
+              @change="syncPlanAmount(plan)"
+            />
+            <div class="plan-amount-display">¥{{ plan.amount || "0.00" }}</div>
+            <el-date-picker v-model="plan.planDate" type="date" value-format="YYYY-MM-DD" placeholder="计划日期" />
             <el-button type="danger" plain @click="removePaymentPlan(plan.id)">删除</el-button>
+          </div>
+          <div class="plan-ratio-hint">
+            <span>已分配比例：<strong>{{ totalRatio.toFixed(2) }}%</strong></span>
+            <span style="margin-left: 16px">合计金额：<strong>¥{{ totalPlanAmount }}</strong></span>
           </div>
         </div>
         <el-empty v-else description="还没有收付款节点，点击“新增节点”开始配置。" :image-size="60" />
@@ -414,6 +446,7 @@ import { Plus, Search, Refresh, Document, Warning, Clock } from "@element-plus/i
 import { contractApi } from "@/api/contract";
 import { contractAttachmentApi } from "@/api/contractAttachment";
 import { supplierApi } from "@/api/supplier";
+import { projectExternalApi } from "@/api/projectExternal";
 
 const loading = ref(false);
 const saving = ref(false);
@@ -426,6 +459,7 @@ const detailData = ref<any | null>(null);
 const selectedContractId = ref<number | null>(null);
 const filterType = ref("all");
 const supplierOptions = ref<any[]>([]);
+const projectOptions = ref<any[]>([]);
 const pendingFiles = ref<UploadFile[]>([]);
 
 const contractTypeOptions = ["销售", "采购", "服务", "劳务", "租赁"];
@@ -458,8 +492,19 @@ const form = reactive({
   remark: "",
 });
 
-const paymentPlans = ref<Array<{ id: number; phase: string; type: string; amount: string; planDate: string }>>([]);
+const paymentPlans = ref<Array<{ id: number; phase: string; type: string; ratio: number; amount: string; planDate: string }>>([]);
 let paymentPlanSeed = 1;
+
+const totalRatio = computed(() => paymentPlans.value.reduce((sum, p) => sum + (p.ratio || 0), 0));
+const totalPlanAmount = computed(() => {
+  return paymentPlans.value.reduce((sum, p) => sum + Number(p.amount || 0), 0).toFixed(2);
+});
+
+function syncPlanAmount(plan: { ratio: number; amount: string }) {
+  const base = Number(form.amountTaxInclusive || 0);
+  if (!base) { plan.amount = "0.00"; return; }
+  plan.amount = ((plan.ratio || 0) / 100 * base).toFixed(2);
+}
 
 const reminderById = computed(() => {
   const map = new Map<number, any>();
@@ -606,6 +651,24 @@ async function loadSuppliers() {
   supplierOptions.value = res.data || [];
 }
 
+async function loadProjects() {
+  try {
+    const res = await projectExternalApi.projectList();
+    projectOptions.value = res.data || [];
+  } catch {
+    // 项目管理系统不可达时降级为手动输入
+    projectOptions.value = [];
+  }
+}
+
+function handleProjectChange(projectId: string) {
+  const matched = projectOptions.value.find((item) => String(item.id) === String(projectId));
+  if (matched) {
+    form.projectName = matched.projectName;
+    form.projectId = String(matched.id);
+  }
+}
+
 async function loadReminders() {
   const res = await contractApi.reminders();
   reminders.value = res.data || [];
@@ -676,13 +739,19 @@ function openEdit(row: any) {
     summary: parsed.summary || "",
     remark: parsed.remark || "",
   });
-  paymentPlans.value = parsed.paymentPlans.map((item) => ({
-    id: paymentPlanSeed++,
-    phase: item.phase,
-    type: item.type,
-    amount: item.amount,
-    planDate: item.planDate === "-" ? "" : item.planDate,
-  }));
+  const base = Number(form.amountTaxInclusive || 0);
+  paymentPlans.value = parsed.paymentPlans.map((item) => {
+    const amount = item.amount || "0";
+    const ratio = base > 0 ? Math.round(Number(amount) / base * 10000) / 100 : 0;
+    return {
+      id: paymentPlanSeed++,
+      phase: item.phase,
+      type: item.type,
+      ratio,
+      amount,
+      planDate: item.planDate === "-" ? "" : item.planDate,
+    };
+  });
   pendingFiles.value = [];
   dialogVisible.value = true;
 }
@@ -699,7 +768,8 @@ function addPaymentPlan() {
     id: paymentPlanSeed++,
     phase: "",
     type: "应收",
-    amount: "",
+    ratio: 0,
+    amount: "0.00",
     planDate: "",
   });
 }
@@ -733,8 +803,8 @@ function generateContractNo() {
 }
 
 async function submitForm() {
-  if (!form.contractNo || !form.contractTitle || !form.supplierName) {
-    ElMessage.warning("请先填写合同编号、合同名称和相对方");
+  if (!form.contractNo || !form.contractTitle || !form.supplierName || !form.supplierId) {
+    ElMessage.warning("请先填写合同编号、合同名称、相对方和供应商ID");
     return;
   }
   saving.value = true;
@@ -783,6 +853,8 @@ async function submitForm() {
     ElMessage.success(currentId.value ? "合同已更新" : "合同已创建");
     dialogVisible.value = false;
     await loadData();
+  } catch (error: any) {
+    ElMessage.error(error?.response?.data?.message || error?.message || "保存失败");
   } finally {
     saving.value = false;
   }
@@ -798,12 +870,31 @@ async function handleUploadAttachment(uploadFile: UploadFile) {
   await loadDetail(selectedContractId.value);
 }
 
-function previewAttachment(id: number) {
-  window.open(contractAttachmentApi.previewUrl(id), "_blank");
+async function previewAttachment(row: any) {
+  try {
+    const blob = await contractAttachmentApi.preview(row.id);
+    const url = URL.createObjectURL(blob);
+    window.open(url, "_blank");
+    window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  } catch (error: any) {
+    ElMessage.error(error?.response?.data?.message || error?.message || "附件预览失败");
+  }
 }
 
-function downloadAttachment(id: number) {
-  window.open(contractAttachmentApi.downloadUrl(id), "_blank");
+async function downloadAttachment(row: any) {
+  try {
+    const blob = await contractAttachmentApi.download(row.id);
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = row.fileName || "contract-attachment";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  } catch (error: any) {
+    ElMessage.error(error?.response?.data?.message || error?.message || "附件下载失败");
+  }
 }
 
 async function handleDelete(id: number) {
@@ -830,6 +921,7 @@ async function deleteAttachment(id: number) {
 onMounted(() => {
   loadData();
   loadSuppliers();
+  loadProjects();
 });
 </script>
 
@@ -938,10 +1030,33 @@ onMounted(() => {
   gap: 12px;
 }
 
+.plan-header-row {
+  display: grid;
+  grid-template-columns: 1.4fr 0.7fr 130px 1fr 1fr auto;
+  gap: 10px;
+  font-size: 12px;
+  color: #888;
+  padding: 0 2px;
+}
 .plan-row {
   display: grid;
-  grid-template-columns: 1.3fr 0.8fr 0.8fr 1fr auto;
+  grid-template-columns: 1.4fr 0.7fr 130px 1fr 1fr auto;
   gap: 10px;
+  align-items: center;
+}
+.plan-amount-display {
+  font-weight: 600;
+  color: #2563eb;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+}
+.plan-ratio-hint {
+  font-size: 13px;
+  color: #555;
+  padding: 6px 2px 0;
+  border-top: 1px solid #eee;
+  margin-top: 4px;
 }
 
 .upload-tip,

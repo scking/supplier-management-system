@@ -113,6 +113,10 @@ function openEdit(row: any) {
 }
 
 async function submitForm() {
+  if (!form.supplierId) {
+    ElMessage.warning("请先填写供应商ID");
+    return;
+  }
   const payload = {
     supplierId: Number(form.supplierId),
     projectId: Number(form.projectId || 0) || null,
@@ -125,15 +129,19 @@ async function submitForm() {
     complianceScore: Number(form.complianceScore || 0),
     remark: form.remark,
   };
-  if (currentId.value) {
-    await evaluationApi.update(currentId.value, payload);
-    ElMessage.success("供应商评价已更新");
-  } else {
-    await evaluationApi.create(payload);
-    ElMessage.success("供应商评价已创建");
+  try {
+    if (currentId.value) {
+      await evaluationApi.update(currentId.value, payload);
+      ElMessage.success("供应商评价已更新");
+    } else {
+      await evaluationApi.create(payload);
+      ElMessage.success("供应商评价已创建");
+    }
+    dialogVisible.value = false;
+    await loadData();
+  } catch (error: any) {
+    ElMessage.error(error?.response?.data?.message || error?.message || "保存失败");
   }
-  dialogVisible.value = false;
-  await loadData();
 }
 
 async function handleDelete(id: number) {

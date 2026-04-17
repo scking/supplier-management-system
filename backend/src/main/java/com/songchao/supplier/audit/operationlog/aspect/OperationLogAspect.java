@@ -8,20 +8,30 @@ import com.songchao.supplier.audit.operationlog.service.OperationLogService;
 import com.songchao.supplier.security.auth.AuthContext;
 import com.songchao.supplier.security.auth.CurrentUser;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.springframework.stereotype.Component;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import java.util.ArrayList;
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Aspect
 @Component
 public class OperationLogAspect {
+    private static final int JSON_COLUMN_MAX_LENGTH = 2000;
+    private static final int JSON_PREVIEW_MAX_LENGTH = 1200;
+
     private final OperationLogService operationLogService;
     private final ObjectMapper objectMapper;
 
@@ -55,7 +65,7 @@ public class OperationLogAspect {
         log.setBizType(record.bizType());
         log.setOperationType(record.operation());
         log.setOperationDesc(record.description());
-        log.setBeforeData(toJson(args == null ? new Object[0] : Arrays.stream(args).toArray()));
+        log.setBeforeData(toJson(sanitizeArgs(args)));
         log.setCreatedAt(LocalDateTime.now().toString());
         CurrentUser currentUser = AuthContext.get();
         if (currentUser != null) {
@@ -88,12 +98,69 @@ public class OperationLogAspect {
         }
     }
 
+    private Object[] sanitizeArgs(Object[] args) {
+        if (args == null || args.length == 0) {
+            return new Object[0];
+        }
+        List<Object> sanitized = new ArrayList<>();
+        for (Object arg : Arrays.stream(args).toList()) {
+            if (arg == null) {
+                sanitized.add(null);
+                continue;
+            }
+            if (arg instanceof HttpServletRequest
+                    || arg instanceof HttpServletResponse
+                    || arg instanceof BindingResult) {
+                sanitized.add(Map.of("type", arg.getClass().getSimpleName()));
+                continue;
+            }
+            if (arg instanceof MultipartFile file) {
+                Map<String, Object> fileInfo = new LinkedHashMap<>();
+                fileInfo.put("type", file.getClass().getSimpleName());
+                fileInfo.put("name", file.getName());
+                fileInfo.put("originalFilename", file.getOriginalFilename());
+                fileInfo.put("size", file.getSize());
+                sanitized.add(fileInfo);
+                continue;
+            }
+            sanitized.add(arg);
+        }
+        return sanitized.toArray();
+    }
+
     private String toJson(Object value) {
         try {
-            return truncate(objectMapper.writeValueAsString(value), 2000);
+            return serializeForJsonColumn(value);
         } catch (JsonProcessingException e) {
-            return truncate(String.valueOf(value), 2000);
+            try {
+                Map<String, Object> fallback = new LinkedHashMap<>();
+                fallback.put("unserializable", String.valueOf(value));
+                fallback.put("error", e.getOriginalMessage());
+                return serializeForJsonColumn(fallback);
+            } catch (JsonProcessingException ignored) {
+                return "{\"unserializable\":\"serialization_failed\"}";
+            }
         }
+    }
+
+    private String serializeForJsonColumn(Object value) throws JsonProcessingException {
+        String json = objectMapper.writeValueAsString(value);
+        if (json.length() <= JSON_COLUMN_MAX_LENGTH) {
+            return json;
+        }
+        Map<String, Object> truncated = new LinkedHashMap<>();
+        truncated.put("truncated", true);
+        truncated.put("originalLength", json.length());
+        truncated.put("preview", truncate(json, JSON_PREVIEW_MAX_LENGTH));
+        String truncatedJson = objectMapper.writeValueAsString(truncated);
+        if (truncatedJson.length() <= JSON_COLUMN_MAX_LENGTH) {
+            return truncatedJson;
+        }
+
+        Map<String, Object> minimal = new LinkedHashMap<>();
+        minimal.put("truncated", true);
+        minimal.put("originalLength", json.length());
+        return objectMapper.writeValueAsString(minimal);
     }
 
     private String truncate(String value, int maxLength) {

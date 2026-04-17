@@ -120,6 +120,10 @@ function openEdit(row: any) {
 }
 
 async function submitForm() {
+  if (!form.contractId || !form.supplierId || !form.performanceType || !form.nodeName) {
+    ElMessage.warning("请先填写合同ID、供应商ID、履约类型和节点名称");
+    return;
+  }
   const payload = {
     contractId: Number(form.contractId),
     projectId: Number(form.projectId || 0) || null,
@@ -132,15 +136,19 @@ async function submitForm() {
     description: form.description,
     remark: form.remark,
   };
-  if (currentId.value) {
-    await performanceApi.update(currentId.value, payload);
-    ElMessage.success("履约节点已更新");
-  } else {
-    await performanceApi.create(payload);
-    ElMessage.success("履约节点已创建");
+  try {
+    if (currentId.value) {
+      await performanceApi.update(currentId.value, payload);
+      ElMessage.success("履约节点已更新");
+    } else {
+      await performanceApi.create(payload);
+      ElMessage.success("履约节点已创建");
+    }
+    dialogVisible.value = false;
+    await loadData();
+  } catch (error: any) {
+    ElMessage.error(error?.response?.data?.message || error?.message || "保存失败");
   }
-  dialogVisible.value = false;
-  await loadData();
 }
 
 async function handleDelete(id: number) {

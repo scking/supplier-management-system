@@ -116,6 +116,10 @@ function openEdit(row: any) {
 }
 
 async function submitForm() {
+  if (!form.productId || !form.fileName || !form.filePath) {
+    ElMessage.warning("请先填写产品ID、文件名和文件路径");
+    return;
+  }
   const payload = {
     productId: Number(form.productId),
     fileName: form.fileName,
@@ -126,15 +130,19 @@ async function submitForm() {
     remark: form.remark,
     uploadedBy: Number(form.uploadedBy || 1),
   };
-  if (currentId.value) {
-    await productAttachmentApi.update(currentId.value, payload);
-    ElMessage.success("产品附件已更新");
-  } else {
-    await productAttachmentApi.create(payload);
-    ElMessage.success("产品附件已创建");
+  try {
+    if (currentId.value) {
+      await productAttachmentApi.update(currentId.value, payload);
+      ElMessage.success("产品附件已更新");
+    } else {
+      await productAttachmentApi.create(payload);
+      ElMessage.success("产品附件已创建");
+    }
+    dialogVisible.value = false;
+    await loadData();
+  } catch (error: any) {
+    ElMessage.error(error?.response?.data?.message || error?.message || "保存失败");
   }
-  dialogVisible.value = false;
-  await loadData();
 }
 
 async function handleDelete(id: number) {
